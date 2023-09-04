@@ -2,7 +2,7 @@
 const url = "https://k1zi9czxpl.execute-api.us-east-1.amazonaws.com";
 
 // Criar uma classe chamada Handler
-export class DmpOutput {
+export class StsOutput {
   // Definir um construtor que recebe o evento como parâmetro
   constructor(event) {
     // Atribuir o evento à propriedade this.event

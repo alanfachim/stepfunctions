@@ -1,15 +1,19 @@
 // Importar o módulo json para manipular dados em formato JSON
- 
+
 
 // Importar os módulos dos adaptadores e do serviço 
-import {DmpOutput} from './src/adapter/output/dmp_output.js';
-import {PoliticaService} from './src/services/politica_service.js';
-import {ProcessarPoliticaInputAdapter} from './src/adapter/input/apigateway_pedidos_input.js';
-  
+import { RedisOutput } from './src/adapter/output/redis.js';
+import { SecretOutput } from './src/adapter/output/secret.js';
+import { StsOutput } from './src/adapter/output/sts.js';
+import { PoliticaService } from './src/services/verifica_cache_service.js';
+import { ProcessarPoliticaInputAdapter } from './src/adapter/input/apigateway_pedidos_input.js';
+
 
 // Declarar serviços
-const dmpOutput = new DmpOutput(); 
-const politicaService = new PoliticaService(dmpOutput);
+const redis = new RedisOutput();
+const secret = new SecretOutput();
+const sts = new StsOutput();
+const politicaService = new PoliticaService(sts, secret, redis);
 const processarPoliticaInputAdapter = new ProcessarPoliticaInputAdapter(politicaService);
 
 // Definir a função lambda_handler que recebe o evento e o contexto como parâmetros
@@ -32,6 +36,6 @@ export const handler = async (event, context) => {
 };
 
 
-handler({"path":"processar_politica"})
+handler({ "path": "processar_politica" })
 
 

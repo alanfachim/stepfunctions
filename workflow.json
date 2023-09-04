@@ -1,0 +1,406 @@
+{
+  "Comment": "A description of my state machine",
+  "StartAt": "Verifica Cache",
+  "States": {
+    "Verifica Cache": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "Payload.$": "$",
+        "FunctionName": "arn:aws:lambda:us-east-1:469122751664:function:verifica-cache:$LATEST"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      
+      "Next": "Choice",
+      "ResultPath": "$.out"
+    },
+    "Choice": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.Payload.concluido",
+          "IsPresent": true,
+          "Next": "Step Functions StartExecution"
+        }
+      ],
+      "Default": "Success"
+    },
+    "Step Functions StartExecution": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::states:startExecution.sync:2",
+      "Parameters": {
+        "StateMachineArn": "arn:aws:states:us-east-1:469122751664:stateMachine:apontamentos",
+        "Input": {
+          "StatePayload": "Hello from Step Functions!",
+          "AWS_STEP_FUNCTIONS_STARTED_BY_EXECUTION_ID.$": "$$.Execution.Id"
+        }
+      },
+      "Next": "Parallel",
+      "ResultPath": null,
+      "OutputPath": "$.Payload"
+    },
+    "Parallel": {
+      "Type": "Parallel",
+      "Branches": [
+        {
+          "StartAt": "API Gateway Invoke (5)",
+          "States": {
+            "API Gateway Invoke (5)": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::apigateway:invoke",
+              "Parameters": {
+                "ApiEndpoint": "k1zi9czxpl.execute-api.us-east-1.amazonaws.com",
+                "Method": "GET",
+                "Headers": {
+                  "Header1": [
+                    "HeaderValue1"
+                  ],
+                  "Header2": [
+                    "HeaderValue2",
+                    "HeaderValue3"
+                  ]
+                },
+                "Stage": "teste",
+                "Path": "/pets",
+                "QueryParameters": {
+                  "QueryParameter1": [
+                    "QueryParameterValue1"
+                  ],
+                  "QueryParameter2": [
+                    "QueryParameterValue2",
+                    "QueryParameterValue3"
+                  ]
+                },
+                "RequestBody": {
+                  "Payload": "Hello from Step Functions!"
+                },
+                "AuthType": "IAM_ROLE"
+              },
+              "End": true,
+              "Retry": [
+                {
+                  "ErrorEquals": [
+                    "States.ALL"
+                  ],
+                  "BackoffRate": 2,
+                  "IntervalSeconds": 1,
+                  "MaxAttempts": 3
+                }
+              ],
+              "Catch": [
+                {
+                  "ErrorEquals": [
+                    "States.ALL"
+                  ],
+                  "Next": "Success (1)"
+                }
+              ],
+              "ResultSelector": {
+                "dataId": "grupos",
+                "output.$": "$"
+              }
+            },
+            "Success (1)": {
+              "Type": "Succeed"
+            }
+          }
+        },
+        {
+          "StartAt": "API Gateway Invoke (2)",
+          "States": {
+            "API Gateway Invoke (2)": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::apigateway:invoke",
+              "Parameters": {
+                "ApiEndpoint": "k1zi9czxpl.execute-api.us-east-1.amazonaws.com",
+                "Method": "GET",
+                "Headers": {
+                  "Autorization.$":   "$.token" ,
+                  "Header2": [
+                    "HeaderValue2",
+                    "HeaderValue3"
+                  ]
+                },
+                "Stage": "teste",
+                "Path": "/pets/",
+                "QueryParameters": {
+                  "QueryParameter1": [
+                    "QueryParameterValue1"
+                  ],
+                  "QueryParameter2": [
+                    "QueryParameterValue2",
+                    "QueryParameterValue3"
+                  ]
+                },
+                "RequestBody": {
+                  "Payload": "Hello from Step Functions!"
+                },
+                "AuthType": "IAM_ROLE"
+              },
+              "Retry": [
+                {
+                  "ErrorEquals": [
+                    "States.ALL"
+                  ],
+                  "BackoffRate": 2,
+                  "IntervalSeconds": 1,
+                  "MaxAttempts": 2,
+                  "Comment": "Retentativa falha por status"
+                }
+              ],
+              "Catch": [
+                {
+                  "ErrorEquals": [
+                    "States.ALL"
+                  ],
+                  "Next": "Success (2)"
+                }
+              ],
+              "End": true
+            },
+            "Success (2)": {
+              "Type": "Succeed"
+            }
+          }
+        },
+        {
+          "StartAt": "API Gateway Invoke (1)",
+          "States": {
+            "API Gateway Invoke (1)": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::apigateway:invoke",
+              "Parameters": {
+                "ApiEndpoint": "k1zi9czxpl.execute-api.us-east-1.amazonaws.com",
+                "Method": "GET",
+                "Headers": {
+                  "Header1": [
+                    "HeaderValue1"
+                  ],
+                  "Header2": [
+                    "HeaderValue2",
+                    "HeaderValue3"
+                  ]
+                },
+                "Stage": "teste",
+                "Path": "/pets",
+                "QueryParameters": {
+                  "QueryParameter1": [
+                    "QueryParameterValue1"
+                  ],
+                  "QueryParameter2": [
+                    "QueryParameterValue2",
+                    "QueryParameterValue3"
+                  ]
+                },
+                "RequestBody": {
+                  "Payload": "Hello from Step Functions!"
+                },
+                "AuthType": "IAM_ROLE"
+              },
+              "End": true
+            }
+          }
+        },
+        {
+          "StartAt": "API Gateway Invoke",
+          "States": {
+            "API Gateway Invoke": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::apigateway:invoke",
+              "Parameters": {
+                "ApiEndpoint": "k1zi9czxpl.execute-api.us-east-1.amazonaws.com",
+                "Method": "GET",
+                "Headers": {
+                  "Header1": [
+                    "HeaderValue1"
+                  ],
+                  "Header2": [
+                    "HeaderValue2",
+                    "HeaderValue3"
+                  ]
+                },
+                "Stage": "teste",
+                "Path.$": "States.Format('/pets/{}', $.id)",
+                "QueryParameters": {
+                  "QueryParameter1": [
+                    "QueryParameterValue1"
+                  ],
+                  "QueryParameter2": [
+                    "QueryParameterValue2",
+                    "QueryParameterValue3"
+                  ]
+                },
+                "RequestBody": {
+                  "Payload": "Hello from Step Functions!"
+                },
+                "AuthType": "IAM_ROLE"
+              },
+              "Next": "Parallel (1)",
+              "ResultSelector": {
+                "id.$": "$.ResponseBody"
+              }
+            },
+            "Parallel (1)": {
+              "Type": "Parallel",
+              "End": true,
+              "Branches": [
+                {
+                  "StartAt": "API Gateway Invoke (3)",
+                  "States": {
+                    "API Gateway Invoke (3)": {
+                      "Type": "Task",
+                      "Resource": "arn:aws:states:::apigateway:invoke",
+                      "Parameters": {
+                        "ApiEndpoint": "k1zi9czxpl.execute-api.us-east-1.amazonaws.com",
+                        "Method": "GET",
+                        "Headers": {
+                          "Header1": [
+                            "HeaderValue1"
+                          ],
+                          "Header2": [
+                            "HeaderValue2",
+                            "HeaderValue3"
+                          ]
+                        },
+                        "Stage": "teste",
+                        "Path.$": "States.Format('/pets/{}', $.id)",
+                        "QueryParameters": {
+                          "QueryParameter1": [
+                            "QueryParameterValue1"
+                          ],
+                          "QueryParameter2": [
+                            "QueryParameterValue2",
+                            "QueryParameterValue3"
+                          ]
+                        },
+                        "RequestBody": {
+                          "Payload": "Hello from Step Functions!"
+                        },
+                        "AuthType": "IAM_ROLE"
+                      },
+                      "End": true
+                    }
+                  }
+                },
+                {
+                  "StartAt": "API Gateway Invoke (4)",
+                  "States": {
+                    "API Gateway Invoke (4)": {
+                      "Type": "Task",
+                      "Resource": "arn:aws:states:::apigateway:invoke",
+                      "Parameters": {
+                        "ApiEndpoint": "k1zi9czxpl.execute-api.us-east-1.amazonaws.com",
+                        "Method": "GET",
+                        "Headers": {
+                          "Header1": [
+                            "HeaderValue1"
+                          ],
+                          "Header2": [
+                            "HeaderValue2",
+                            "HeaderValue3"
+                          ]
+                        },
+                        "Stage": "teste",
+                        "Path.$": "States.Format('/pets/{}', $.id)",
+                        "QueryParameters": {
+                          "QueryParameter1": [
+                            "QueryParameterValue1"
+                          ],
+                          "QueryParameter2": [
+                            "QueryParameterValue2",
+                            "QueryParameterValue3"
+                          ]
+                        },
+                        "RequestBody": {
+                          "Payload": "Hello from Step Functions!"
+                        },
+                        "AuthType": "IAM_ROLE"
+                      },
+                      "End": true
+                    }
+                  }
+                },
+                {
+                  "StartAt": "API Gateway Invoke (6)",
+                  "States": {
+                    "API Gateway Invoke (6)": {
+                      "Type": "Task",
+                      "Resource": "arn:aws:states:::apigateway:invoke",
+                      "Parameters": {
+                        "ApiEndpoint": "k1zi9czxpl.execute-api.us-east-1.amazonaws.com",
+                        "Method": "GET",
+                        "Headers": {
+                          "Header1": [
+                            "HeaderValue1"
+                          ],
+                          "Header2": [
+                            "HeaderValue2",
+                            "HeaderValue3"
+                          ]
+                        },
+                        "Stage": "teste",
+                        "Path": "/pets",
+                        "QueryParameters": {
+                          "QueryParameter1": [
+                            "QueryParameterValue1"
+                          ],
+                          "QueryParameter2": [
+                            "QueryParameterValue2",
+                            "QueryParameterValue3"
+                          ]
+                        },
+                        "RequestBody": {
+                          "Payload": "Hello from Step Functions!"
+                        },
+                        "AuthType": "IAM_ROLE"
+                      },
+                      "End": true
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "Next": "Lambda Invoke (1)"
+    },
+    "Lambda Invoke (1)": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "Payload.$": "$",
+        "FunctionName": "arn:aws:lambda:us-east-1:469122751664:function:executa-politica:$LATEST"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "End": true
+    },
+    "Success": {
+      "Type": "Succeed"
+    }
+  }
+}
